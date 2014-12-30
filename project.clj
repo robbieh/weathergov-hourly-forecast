@@ -8,4 +8,7 @@
                            [hiccup "1.0.5"]
                            [com.github.kyleburton/clj-xpath "1.4.4"]
                            ]
+            :repositories  [["releases"  {:url "https://clojars.org/repo"
+                                          :creds :gpg}]]
+
             )

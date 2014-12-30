@@ -15,6 +15,14 @@
    (:use  [clj-xpath.core :only  [$x $x:tag $x:text $x:text* $x:attrs $x:attrs* $x:node $x:node*]])
   )
 
+;Thanks, MBV!
+(defn holdv [blank? coll]
+  (second (reduce (fn [[x v] x']
+            (let [x (if (blank? x') x x')]
+              [x (conj v x)]))
+          [nil []] coll)))
+
+;(holdv empty? ["A" "" "" "" "" "" "B" "" "" "C" "" "" "" "" "D"]) 
 
 (defn scrub-keyword "Removes parenthesis, spaces, and degree symbols from a string and returns a keyword" [s]
   (keyword (clojure.string/replace s #"[°\(\) ]" "")))
