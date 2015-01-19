@@ -22,8 +22,6 @@
               [x (conj v x)]))
           [nil []] coll)))
 
-;(holdv empty? ["A" "" "" "" "" "" "B" "" "" "C" "" "" "" "" "D"]) 
-
 (defn scrub-keyword "Removes parenthesis, spaces, and degree symbols from a string and returns a keyword" [s]
   (keyword (clojure.string/replace s #"[°\(\) ]" "")))
 
