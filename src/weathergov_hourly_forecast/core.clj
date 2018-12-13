@@ -60,11 +60,15 @@
           (map f (range sz))
     )) )
 
+(defn spy [x] (prn x) x)
+
+(defn get-forecast-page [lat lon]
+  (tagsoup/parse (str "https://forecast.weather.gov/MapClick.php?lat=" lat "&lon=" lon "&FcstType=digital")))
 
 (defn get-forecast-table 
   "Fetches the hourly forecast data from forecast.weather.gov and returns a hashmap."
   [lat lon]
-  (let [ftx (hic/html (tagsoup/parse (str "http://forecast.weather.gov/MapClick.php?lat=" lat "&lon=" lon "&FcstType=digital")))
+  (let [ftx (hic/html (get-forecast-page lat lon))
         t (apply (partial merge-with (comp vec concat)) (map handle-wgov-tr ($x "//html/body/table[6]/*" ftx)))
         t (merge t {:Date (datefix (:Date t))})
         t (into { } (filter #((comp not empty?) (second %)) t))
@@ -73,7 +77,11 @@
     t
     ))
 
-;(get-forecast-table 33.82 -84.36)
+(comment 
+  (get-forecast-table 33.82 -84.36)
+  (def page (get-forecast-page 33.82 -84.36))
+  (identity page)
+  )
 
 
 ;(def ftt (tagsoup/parse "http://forecast.weather.gov/MapClick.php?lat=33.82&lon=-84.36&FcstType=digital" )) 
