@@ -22,4 +22,8 @@ If you would rather have the data indxed by date and hour, call (pivot-data) on 
 
 This is 0.0.1 level code. No errors are caught. The parsing could be more efficient. 
 
+## Update history
+
+0.0.3: weather.gov moved to https, and so did this code
+
 
