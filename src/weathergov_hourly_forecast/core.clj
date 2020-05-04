@@ -80,8 +80,7 @@
 (comment 
   (get-forecast-table 33.82 -84.36)
   (def page (get-forecast-page 33.82 -84.36))
-  (identity page)
-  )
+  (identity page))
 
 
 ;(def ftt (tagsoup/parse "http://forecast.weather.gov/MapClick.php?lat=33.82&lon=-84.36&FcstType=digital" )) 
