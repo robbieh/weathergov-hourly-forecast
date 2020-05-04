@@ -5,7 +5,7 @@ This simply fetches the hourly forecast grid available at weather.gov, parses it
 ## Usage
 
 For your project.clj:
-	[weathergov-hourly-forecast "0.0.2"]
+	[weathergov-hourly-forecast "0.0.6"]
 
 For your code:
 	(:use [weathergov-hourly-forecast.core :only get-forecast-table pivot-data])
@@ -25,5 +25,5 @@ This is 0.0.1 level code. No errors are caught. The parsing could be more effici
 ## Update history
 
 0.0.3: weather.gov moved to https, and so did this code
-
+0.0.6: moved from using clj-tagsoup to enlive
 

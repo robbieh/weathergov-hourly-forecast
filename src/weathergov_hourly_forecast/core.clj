@@ -1,19 +1,21 @@
 (ns weathergov-hourly-forecast.core
   (:require 
     [clojure.java.io :as io]
-    ;[clojure.xml :as xml]
-    ;[clojure.zip :as zip]
-    ;[clojure.data.zip.xml :as zxml]
-    ;[clj-time.core :as clj-time]
-    ;[clj-time.local]
-    ;[clj-time.format]
-    ;[org.httpkit.client :as http]
-    ;[cheshire.core :refer :all]
-    [pl.danieljanus.tagsoup :as tagsoup]
-    [hiccup.core :as hic]
-    )
-   (:use  [clj-xpath.core :only  [$x $x:tag $x:text $x:text* $x:attrs $x:attrs* $x:node $x:node*]])
-  )
+    [net.cgrand.enlive-html :as html]
+    ))
+
+(defn forecast-url [lat lon] (str "https://forecast.weather.gov/MapClick.php?lat=" lat "&lon=" lon "&FcstType=digital"))
+
+;CSS selector from Firefox: body > table:nth-child (6) 
+(def table-selector [:body :> [:table (html/nth-of-type 6)]])
+
+(defn scrub-keyword "Removes parenthesis, spaces, and degree symbols from a string and returns a keyword" [s]
+  (keyword (clojure.string/replace s #"[°\(\) ]" "")))
+
+(defn extract-row [row]
+  (let  [[first-row & rest-rows :as parts] (html/select row [:td])]
+      {(-> first-row html/text scrub-keyword) (mapv html/text rest-rows)}
+    ) )
 
 ;Thanks, MBV!
 (defn holdv [blank? coll]
@@ -21,18 +23,6 @@
             (let [x (if (blank? x') x x')]
               [x (conj v x)]))
           [nil []] coll)))
-
-(defn scrub-keyword "Removes parenthesis, spaces, and degree symbols from a string and returns a keyword" [s]
-  (keyword (clojure.string/replace s #"[°\(\) ]" "")))
-
-(defn handle-wgov-tr 
-  "Parses the <tr> rows from weather.gov tabular data page, returning first column as map key, and data as vector in map value.
-  Example: {:Rain [\"10\" \"--\" \"--\"]}" 
-  [x]
-  (let [row ($x:text* "./td" x)]
-    {(scrub-keyword (first row)) (vec (rest row))}
-    )
-  )
 
 (defn datefix "Weather.gov returns a sparse list of dates ['1/1' '' '' '' '1/2'] and this fills in the sparse list"
   [v]
@@ -62,25 +52,26 @@
 
 (defn spy [x] (prn x) x)
 
-(defn get-forecast-page [lat lon]
-  (tagsoup/parse (str "https://forecast.weather.gov/MapClick.php?lat=" lat "&lon=" lon "&FcstType=digital")))
+(defn get-forecast-page-seq
+  "Returns the seq of elements from Enlive from the forecast.weather.gov page for the given lat/lon coordinates"
+  [lat lon]
+  (html/html-resource (java.net.URL. (forecast-url 33 -84 ))))
 
 (defn get-forecast-table 
   "Fetches the hourly forecast data from forecast.weather.gov and returns a hashmap."
   [lat lon]
-  (let [ftx (hic/html (get-forecast-page lat lon))
-        t (apply (partial merge-with (comp vec concat)) (map handle-wgov-tr ($x "//html/body/table[6]/*" ftx)))
-        t (merge t {:Date (datefix (:Date t))})
-        t (into { } (filter #((comp not empty?) (second %)) t))
-        t (date-time-merge t)
-        ]
-    t
-    ))
+  (let [pg (get-forecast-page-seq lat lon)
+        ftab  (html/select pg table-selector) 
+        rows  (->> ftab first :content rest (take 13))  ;the first half of the table
+        table (into {} (map extract-row rows))
+        table (merge table {:Date (datefix (:Date table))})
+        table (date-time-merge table)]
+    table))
 
 (comment 
   (get-forecast-table 33.82 -84.36)
-  (def page (get-forecast-page 33.82 -84.36))
-  (identity page))
+  (pivot-data (get-forecast-table 33.82 -84.36))
+  )
 
 
 ;(def ftt (tagsoup/parse "http://forecast.weather.gov/MapClick.php?lat=33.82&lon=-84.36&FcstType=digital" )) 
